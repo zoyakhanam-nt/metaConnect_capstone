@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+airflow/dags/generated/__pycache__/
+commands.txt
+.exe
+venv/
+backend/__pycache__/
+backend/venv
+**/venv/

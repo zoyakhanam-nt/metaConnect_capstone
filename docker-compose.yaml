@@ -1,0 +1,165 @@
+version: "3.8"
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:2.10.4
+
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 0
+    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 5
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+    BACKEND_URL: http://api:8000
+    INTERNAL_API_KEY: change-me-internal-key
+    _PIP_ADDITIONAL_REQUIREMENTS: requests
+
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - airflow_logs:/opt/airflow/logs
+    - airflow_plugins:/opt/airflow/plugins
+
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${DB_USER:-deployment_service}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-deployment_service}
+      POSTGRES_DB: ${DB_NAME:-deployment_service}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER:-deployment_service}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+
+  liquibase:
+    image: liquibase/liquibase:4.29
+    volumes:
+      - ./liquibase/changelog:/liquibase/changelog
+    command:
+      - --changelog-file=changelog/changelog-master.sql
+      - --url=jdbc:postgresql://app-db:5432/${DB_NAME:-deployment_service}
+      - --username=${DB_USER:-deployment_service}
+      - --password=${DB_PASSWORD:-deployment_service}
+      - update
+    depends_on:
+      app-db:
+        condition: service_healthy
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    environment:
+      AIRFLOW_DAG_DIR: /opt/airflow/dags/generated
+      AIRFLOW_API_URL: http://airflow-webserver:8080/api/v1
+      AIRFLOW_USERNAME: admin
+      AIRFLOW_PASSWORD: admin
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: metaconnect
+      KEYCLOAK_CLIENT_ID: metaconnect-api
+      INTERNAL_API_KEY: change-me-internal-key
+      DB_HOST: app-db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-deployment_service}
+      DB_USER: ${DB_USER:-deployment_service}
+      DB_PASSWORD: ${DB_PASSWORD:-deployment_service}
+    depends_on:
+      liquibase:
+        condition: service_completed_successfully
+      airflow-webserver:
+        condition: service_started
+      keycloak:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+      VITE_KEYCLOAK_URL: http://localhost:8082
+      VITE_KEYCLOAK_REALM: metaconnect
+      VITE_KEYCLOAK_CLIENT_ID: metaconnect-api
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  airflow_logs:
+  airflow_plugins:
+  app_db_data:
+  frontend_node_modules:
