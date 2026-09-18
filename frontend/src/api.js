@@ -57,6 +57,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  listAllRuns: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/runs${qs ? `?${qs}` : ""}`);
+  },
   deleteConnection: (id) => request(`/connections/${id}`, { method: "DELETE" }),
   testConnection: (id) =>
     request(`/connections/${id}/test`, { method: "POST" }),

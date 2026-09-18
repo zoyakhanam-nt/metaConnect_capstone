@@ -9,7 +9,7 @@ from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.connection import Connection
 from app.models.metadata import ColumnMetadata, DatabaseMetadata, IngestionRun, SchemaMetadata, TableMetadata
-from app.schemas.metadata import ColumnOut, DatabaseOut, IngestionRunOut, SchemaOut, TableOut
+from app.schemas.metadata import ColumnOut, DatabaseOut, IngestionRunOut, IngestionRunWithConnection, SchemaOut, TableOut
 from app.schemas.pagination import Page
 from app.services.airflow_service import AirflowService
 
@@ -151,3 +151,40 @@ def get_ingestion_logs(
         raise HTTPException(status_code=502, detail=f"Could not reach Airflow: {e}")
 
     return {"logs": logs}
+
+@router.get("/runs", response_model=Page[IngestionRunWithConnection])
+def list_all_runs(
+    connection_id: uuid.UUID | None = Query(None),
+    status: str | None = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    query = select(IngestionRun, Connection.connection_name).join(
+        Connection, Connection.id == IngestionRun.connection_id
+    )
+    if connection_id:
+        query = query.where(IngestionRun.connection_id == connection_id)
+    if status:
+        query = query.where(IngestionRun.status == status)
+    query = query.order_by(IngestionRun.started_at.desc())
+
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    rows = db.execute(query.offset(skip).limit(limit)).all()
+
+    items = [
+        IngestionRunWithConnection(
+            id=run.id,
+            connection_id=run.connection_id,
+            connection_name=name,
+            dag_id=run.dag_id,
+            dag_run_id=run.dag_run_id,
+            status=run.status,
+            error_message=run.error_message,
+            started_at=run.started_at,
+            finished_at=run.finished_at,
+        )
+        for run, name in rows
+    ]
+    return Page(items=items, total=total, skip=skip, limit=limit)

@@ -53,32 +53,6 @@ export default function Dashboard() {
           alt="Ingestion runs over time"
         />
       </div>
-
-      <h2>Recent Ingestion Runs</h2>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Connection</th>
-            <th>Status</th>
-            <th>Started</th>
-            <th>Finished</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stats.recent_runs.map((run) => (
-            <tr key={run.id}>
-              <td>{run.connection_name}</td>
-              <td className={`status status-${run.status}`}>{run.status}</td>
-              <td>{new Date(run.started_at).toLocaleString()}</td>
-              <td>
-                {run.finished_at
-                  ? new Date(run.finished_at).toLocaleString()
-                  : "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

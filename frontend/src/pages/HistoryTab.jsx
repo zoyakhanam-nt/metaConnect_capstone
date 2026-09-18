@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-
 import { api } from "../api.js";
 import Pagination from "../components/Pagination.jsx";
 import LogsModal from "../components/LogsModal.jsx";
 
 const LIMIT = 10;
 
-export default function ConnectionRuns() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+export default function HistoryTab({ connectionFilter, onClearFilter }) {
+  const [connections, setConnections] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("");
   const [runs, setRuns] = useState([]);
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
@@ -20,11 +18,25 @@ export default function ConnectionRuns() {
   });
 
   useEffect(() => {
-    api.getConnectionRuns(id, { skip, limit: LIMIT }).then((page) => {
+    api.listConnections({ limit: 100 }).then((p) => setConnections(p.items));
+  }, []);
+
+  const load = () => {
+    const params = { skip, limit: LIMIT };
+    if (connectionFilter) params.connection_id = connectionFilter;
+    if (statusFilter) params.status = statusFilter;
+    api.listAllRuns(params).then((page) => {
       setRuns(page.items);
       setTotal(page.total);
     });
-  }, [id, skip]);
+  };
+
+  useEffect(() => {
+    load();
+  }, [skip, connectionFilter, statusFilter]);
+  useEffect(() => {
+    setSkip(0);
+  }, [connectionFilter, statusFilter]);
 
   const viewLogs = async (runId) => {
     setLogsState({ open: true, logs: null, error: null });
@@ -36,17 +48,41 @@ export default function ConnectionRuns() {
     }
   };
 
+  const filteredName = connections.find(
+    (c) => c.id === connectionFilter,
+  )?.connection_name;
+
   return (
     <div>
-      <button className="back-link" onClick={() => navigate("/connections")}>
-        ← Back to Connections
-      </button>
-      <h1>Ingestion Run History</h1>
+      <div className="toolbar">
+        {connectionFilter ? (
+          <span className="filter-pill">
+            Filtered to: <strong>{filteredName}</strong>
+            <button className="pill-clear" onClick={onClearFilter}>
+              ✕
+            </button>
+          </span>
+        ) : (
+          <span className="field-hint">Showing all connections</span>
+        )}
+        <select
+          className="filter-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          <option value="success">Success</option>
+          <option value="failed">Failed</option>
+          <option value="running">Running</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
 
       <div className="card">
         <table className="table">
           <thead>
             <tr>
+              <th>Connection</th>
               <th>Status</th>
               <th>Started</th>
               <th>Finished</th>
@@ -57,6 +93,7 @@ export default function ConnectionRuns() {
           <tbody>
             {runs.map((r) => (
               <tr key={r.id}>
+                <td>{r.connection_name}</td>
                 <td>
                   <span className={`badge badge-${r.status}`}>{r.status}</span>
                 </td>
@@ -82,8 +119,8 @@ export default function ConnectionRuns() {
             ))}
             {runs.length === 0 && (
               <tr>
-                <td colSpan={5} className="empty-row">
-                  No runs yet
+                <td colSpan={6} className="empty-row">
+                  No runs found
                 </td>
               </tr>
             )}

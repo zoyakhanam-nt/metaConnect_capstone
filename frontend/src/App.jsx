@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Sidebar from "./components/Sidebar.jsx";
-import Dashboard from "./pages/Dashboards.jsx";
-import Connections from "./pages/Connections.jsx";
-import ConnectionRuns from "./pages/ConnectionRuns.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import Services from "./pages/Services.jsx";
 import MetadataExplorer from "./pages/MetadataExplorer.jsx";
 import Login from "./pages/Login.jsx";
 import ProtectedRoute from "./components/ProtectedRoutes.jsx";
@@ -16,10 +15,8 @@ function AppShell() {
       <main className="content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/connections" element={<Connections />} />
-          <Route path="/connections/:id/runs" element={<ConnectionRuns />} />
+          <Route path="/services" element={<Services />} />
           <Route path="/explorer" element={<MetadataExplorer />} />
-          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
         </Routes>
       </main>
     </div>
@@ -33,7 +30,6 @@ export default function App() {
     const updateAuthentication = () => setAuthenticated(isAuthenticated());
     window.addEventListener(AUTH_CHANGE_EVENT, updateAuthentication);
     window.addEventListener("storage", updateAuthentication);
-
     return () => {
       window.removeEventListener(AUTH_CHANGE_EVENT, updateAuthentication);
       window.removeEventListener("storage", updateAuthentication);

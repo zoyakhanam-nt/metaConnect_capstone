@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.schemas.metadata import ColumnOut, DatabaseOut, IngestionRunOut, IngestionRunWithConnection, SchemaOut, TableOut
+
 ALLOWED_CONNECTION_TYPES = {"cockroachdb"}
 CRON_REGEX = re.compile(r"^(\S+\s+){4}\S+$")
 
@@ -155,6 +157,19 @@ class IngestionRunOut(BaseModel):
 
     id: uuid.UUID
     connection_id: uuid.UUID
+    dag_id: str | None
+    dag_run_id: str | None
+    status: str
+    error_message: str | None
+    started_at: datetime
+    finished_at: datetime | None
+
+class IngestionRunWithConnection(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    connection_id: uuid.UUID
+    connection_name: str
     dag_id: str | None
     dag_run_id: str | None
     status: str

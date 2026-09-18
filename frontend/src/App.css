@@ -698,3 +698,38 @@ body {
   overflow: auto;
   white-space: pre-wrap;
 }
+.page-tabs {
+  margin-top: 8px;
+  margin-bottom: 0;
+  border-radius: 10px 10px 0 0;
+}
+.tab-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 20px;
+}
+.tab-content .card {
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef2ff;
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+.pill-clear {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}

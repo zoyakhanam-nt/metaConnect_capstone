@@ -20,11 +20,11 @@ export default function Sidebar() {
         <NavLink to="/" end className="sidebar-link">
           Dashboard
         </NavLink>
-        <NavLink to="/connections" className="sidebar-link">
-          Connections
+        <NavLink to="/services" className="sidebar-link">
+          Services
         </NavLink>
         <NavLink to="/explorer" className="sidebar-link">
-          Metadata Explorer
+          Explorer
         </NavLink>
       </nav>
 
