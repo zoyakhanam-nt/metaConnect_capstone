@@ -1,4 +1,3 @@
-import os
 import time
 
 import requests
@@ -6,10 +5,11 @@ from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
-KEYCLOAK_URL = os.getenv("KEYCLOAK_URL")
-KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM")
-if not KEYCLOAK_URL or not KEYCLOAK_REALM:
-    raise RuntimeError("KEYCLOAK_URL and KEYCLOAK_REALM must be set in the local .env file.")
+from app.core.config import get_settings
+
+settings = get_settings()
+KEYCLOAK_URL = settings.keycloak_url
+KEYCLOAK_REALM = settings.keycloak_realm
 
 _JWKS_URL = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
 
@@ -18,9 +18,7 @@ _JWKS_TTL_SECONDS = 300
 
 bearer_scheme = HTTPBearer()
 
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
-if not INTERNAL_API_KEY:
-    raise RuntimeError("INTERNAL_API_KEY is not set. Add it to your local .env file.")
+INTERNAL_API_KEY = settings.internal_api_key
 
 
 def _get_jwks() -> dict:

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText } from "lucide-react";
+
 import { api } from "../api.js";
 import Pagination from "../components/Pagination.jsx";
 import LogsModal from "../components/LogsModal.jsx";
@@ -39,7 +39,7 @@ export default function ConnectionRuns() {
   return (
     <div>
       <button className="back-link" onClick={() => navigate("/connections")}>
-        <ArrowLeft size={16} /> Back to Connections
+        ← Back to Connections
       </button>
       <h1>Ingestion Run History</h1>
 
@@ -74,7 +74,7 @@ export default function ConnectionRuns() {
                       title="View Airflow logs"
                       onClick={() => viewLogs(r.id)}
                     >
-                      <FileText size={15} />
+                      ▤
                     </button>
                   )}
                 </td>

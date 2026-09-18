@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Play,
-  TestTube2,
-  Trash2,
-  History,
-  Plus,
-  X,
-  Pencil,
-} from "lucide-react";
+
 import { api } from "../api.js";
 import Pagination from "../components/Pagination.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
@@ -145,7 +137,7 @@ export default function Connections() {
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await api.testConnection(form);
+      const result = await api.testNewConnection(form);
       setTestResult(result);
     } catch (err) {
       setTestResult({ success: false, message: err.message });
@@ -257,15 +249,7 @@ export default function Connections() {
           className="btn-primary"
           onClick={showForm ? closeForm : openAddForm}
         >
-          {showForm ? (
-            <>
-              <X size={16} /> Cancel
-            </>
-          ) : (
-            <>
-              <Plus size={16} /> Add Connection
-            </>
-          )}
+          {showForm ? <>✕ Cancel</> : <>＋ Add Connection</>}
         </button>
       </div>
 
@@ -385,8 +369,7 @@ export default function Connections() {
                     onClick={handleTestInForm}
                     disabled={testing}
                   >
-                    <TestTube2 size={15} />{" "}
-                    {testing ? "Testing..." : "Test Connection"}
+                    🧪 {testing ? "Testing..." : "Test Connection"}
                   </button>
                   {testResult && (
                     <span
@@ -584,30 +567,30 @@ export default function Connections() {
                       disabled={busyId === c.id}
                       onClick={() => handleTestExisting(c.id)}
                     >
-                      <TestTube2 size={15} />
+                      🧪
                     </button>
                     <button
                       title="Run ingestion now"
                       disabled={busyId === c.id}
                       onClick={() => handleIngest(c.id)}
                     >
-                      <Play size={15} />
+                      ▶
                     </button>
                     <button
                       title="View run history"
                       onClick={() => navigate(`/connections/${c.id}/runs`)}
                     >
-                      <History size={15} />
+                      🕒
                     </button>
                     <button title="Edit" onClick={() => openEditForm(c)}>
-                      <Pencil size={15} />
+                      ✎
                     </button>
                     <button
                       title="Delete"
                       className="btn-danger"
                       onClick={() => setDeleteTarget(c)}
                     >
-                      <Trash2 size={15} />
+                      🗑
                     </button>
                   </td>
                 </tr>

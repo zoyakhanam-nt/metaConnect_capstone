@@ -105,3 +105,59 @@ class ConnectionResponse(BaseModel):
 class ConnectionTestResult(BaseModel):
     success: bool
     message: str
+
+
+class DatabaseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    connection_id: uuid.UUID
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class SchemaOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    database_id: uuid.UUID
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class TableOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    schema_id: uuid.UUID
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ColumnOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    table_id: uuid.UUID
+    name: str
+    data_type: str | None
+    is_primary_key: bool
+    is_nullable: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class IngestionRunOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    connection_id: uuid.UUID
+    dag_id: str | None
+    dag_run_id: str | None
+    status: str
+    error_message: str | None
+    started_at: datetime
+    finished_at: datetime | None

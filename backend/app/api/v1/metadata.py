@@ -1,6 +1,6 @@
-from pdb import run
 import uuid
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -134,7 +134,7 @@ def get_ingestion_logs(
     run_id: uuid.UUID,
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
-    ):
+):
     run = db.get(IngestionRun, run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="Ingestion run not found")
@@ -143,7 +143,11 @@ def get_ingestion_logs(
 
     try:
         logs = airflow_service.fetch_task_logs(run.dag_id, run.dag_run_id)
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code if e.response is not None else 502
+        body = e.response.text[:300] if e.response is not None else str(e)
+        raise HTTPException(status_code=502, detail=f"Airflow returned {status_code}: {body}")
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Could not fetch logs from Airflow: {e}")
+        raise HTTPException(status_code=502, detail=f"Could not reach Airflow: {e}")
 
     return {"logs": logs}

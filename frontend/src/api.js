@@ -52,6 +52,11 @@ export const api = {
   },
   createConnection: (data) =>
     request("/connections", { method: "POST", body: JSON.stringify(data) }),
+  testNewConnection: (data) =>
+    request("/connections/test", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
   deleteConnection: (id) => request(`/connections/${id}`, { method: "DELETE" }),
   testConnection: (id) =>
     request(`/connections/${id}/test`, { method: "POST" }),

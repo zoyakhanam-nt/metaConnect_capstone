@@ -47,6 +47,27 @@ class ConnectionCreate(BaseModel):
         return v
 
 
+class ConnectionUpdate(BaseModel):
+    connection_name: str | None = Field(default=None, min_length=1, max_length=255)
+    host: str | None = Field(default=None, min_length=1, max_length=255)
+    port: int | None = Field(default=None, ge=1, le=65535)
+    username: str | None = Field(default=None, min_length=1, max_length=255)
+    password: str | None = None
+    description: str | None = Field(default=None, max_length=1000)
+    database: str | None = Field(default=None, min_length=1, max_length=255)
+    schedule_cron: str | None = Field(default=None, max_length=100)
+
+    @field_validator("schedule_cron")
+    @classmethod
+    def validate_update_cron(cls, v: str | None) -> str | None:
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip()
+        if not CRON_REGEX.match(v):
+            raise ValueError("schedule_cron must be a 5-field cron expression, e.g. '0 */6 * * *'")
+        return v
+
+
 class ConnectionScheduleUpdate(BaseModel):
     schedule_cron: str | None = Field(default=None, max_length=100)
 

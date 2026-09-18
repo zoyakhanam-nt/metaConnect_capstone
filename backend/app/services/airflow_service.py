@@ -1,21 +1,22 @@
-import os
 import time
 from pathlib import Path
 
 import requests
 
 from app.templates.dag_template import generate_dag
+from app.core.config import get_settings
 
 
 class AirflowService:
     def __init__(self):
-        self.dag_directory = Path(os.environ.get("AIRFLOW_DAG_DIR", "/opt/airflow/dags/generated"))
+        settings = get_settings()
+        self.dag_directory = Path(settings.airflow_dag_dir)
         self.dag_directory.mkdir(parents=True, exist_ok=True)
 
-        self.airflow_api_url = os.environ["AIRFLOW_API_URL"]
+        self.airflow_api_url = settings.airflow_api_url
         self.airflow_auth = (
-            os.environ["AIRFLOW_USERNAME"],
-            os.environ["AIRFLOW_PASSWORD"],
+            settings.airflow_username,
+            settings.airflow_password,
         )
 
     def ensure_dag(self, connection_id: str, schedule_cron: str | None = None) -> str:
@@ -57,7 +58,10 @@ class AirflowService:
         return self.ensure_dag(connection_id, schedule_cron)
 
     def fetch_task_logs(self, dag_id: str, dag_run_id: str, task_id: str = "run_ingestion", try_number: int = 1) -> str:
-        url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs/{try_number}"
+        from urllib.parse import quote
+
+        encoded_run_id = quote(dag_run_id, safe="")
+        url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{encoded_run_id}/taskInstances/{task_id}/logs/{try_number}"
         resp = requests.get(url, auth=self.airflow_auth, headers={"Accept": "text/plain"})
         resp.raise_for_status()
         return resp.text

@@ -1,8 +1,8 @@
-import os
-
 from cryptography.fernet import Fernet, InvalidToken
 
-_ENCRYPTION_KEY = os.environ["ENCRYPTION_KEY"]
+from app.core.config import get_settings
+
+_ENCRYPTION_KEY = get_settings().encryption_key
 _fernet = Fernet(_ENCRYPTION_KEY.encode())
 
 

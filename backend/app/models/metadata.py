@@ -55,6 +55,7 @@ class IngestionRun(Base):
         UUID(as_uuid=True), ForeignKey("connection.id", ondelete="CASCADE"), nullable=False
     )
     dag_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    dag_run_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
