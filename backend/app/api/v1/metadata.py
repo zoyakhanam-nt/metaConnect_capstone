@@ -33,7 +33,12 @@ def trigger_ingestion(
     db.refresh(run)
 
     try:
-        dag_id, dag_run_id = airflow_service.deploy_and_trigger(str(connection_id), str(run.id), connection.schedule_cron)
+        dag_id, dag_run_id = airflow_service.deploy_and_trigger(
+            str(connection_id),
+            connection.connection_name,
+            str(run.id),
+            connection.schedule_cron,
+        )
         run.dag_id = dag_id
         run.dag_run_id = dag_run_id
         run.status = "running"

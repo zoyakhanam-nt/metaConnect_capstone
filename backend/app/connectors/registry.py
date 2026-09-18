@@ -11,8 +11,8 @@ CONNECTOR_REGISTRY = {
 }
 
 
-def get_connector(connector_type: str, config: dict):
+def get_connector(connector_type: str, **config):
     connector_cls = CONNECTOR_REGISTRY.get(connector_type)
     if not connector_cls:
         raise ValueError(f"Unsupported connector type: {connector_type}")
-    return connector_cls(config)
+    return connector_cls(**config)

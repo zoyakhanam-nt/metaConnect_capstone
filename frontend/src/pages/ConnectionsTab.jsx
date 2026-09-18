@@ -42,7 +42,6 @@ export default function ConnectionsTab({ onViewHistory }) {
   const [editingId, setEditingId] = useState(null);
   const [activeFormTab, setActiveFormTab] = useState("details");
   const [form, setForm] = useState(emptyForm);
-  const [ownerInfo, setOwnerInfo] = useState(null);
   const [schedule, setSchedule] = useState({
     frequency: "manual",
     time: "00:00",
@@ -86,7 +85,6 @@ export default function ConnectionsTab({ onViewHistory }) {
   const openAddForm = () => {
     setEditingId(null);
     setForm(emptyForm);
-    setOwnerInfo(null);
     setSchedule({ frequency: "manual", time: "00:00", weekday: 0 });
     setCustomCron("");
     setTestResult(null);
@@ -105,7 +103,6 @@ export default function ConnectionsTab({ onViewHistory }) {
       password: "",
       database: c.database,
     });
-    setOwnerInfo({ owner_name: c.owner_name, owner_email: c.owner_email });
     const parsed = parseCron(c.schedule_cron);
     if (parsed.frequency === "custom") {
       setSchedule({ frequency: "custom", time: "00:00", weekday: 0 });
@@ -235,21 +232,12 @@ export default function ConnectionsTab({ onViewHistory }) {
             >
               1. Connection Details
             </button>
-            {editingId && (
-              <button
-                type="button"
-                className={activeFormTab === "owner" ? "tab active" : "tab"}
-                onClick={() => setActiveFormTab("owner")}
-              >
-                2. Owner
-              </button>
-            )}
             <button
               type="button"
               className={activeFormTab === "schedule" ? "tab active" : "tab"}
               onClick={() => setActiveFormTab("schedule")}
             >
-              {editingId ? "3." : "2."} Ingestion Schedule
+              2. Ingestion Schedule
             </button>
           </div>
 
@@ -352,23 +340,6 @@ export default function ConnectionsTab({ onViewHistory }) {
                   )}
                 </div>
               </>
-            )}
-
-            {activeFormTab === "owner" && editingId && (
-              <div className="form-grid">
-                <div className="field">
-                  <label>Owner Name</label>
-                  <input value={ownerInfo?.owner_name || ""} disabled />
-                  <span className="field-hint">
-                    Owner is set to the connection's creator and can't be
-                    changed here
-                  </span>
-                </div>
-                <div className="field">
-                  <label>Owner Email</label>
-                  <input value={ownerInfo?.owner_email || ""} disabled />
-                </div>
-              </div>
             )}
 
             {activeFormTab === "schedule" && (

@@ -103,7 +103,12 @@ export default function HistoryTab({ connectionFilter, onClearFilter }) {
                     ? new Date(r.finished_at).toLocaleString()
                     : "-"}
                 </td>
-                <td className="error-cell">{r.error_message || "-"}</td>
+                <td
+                  className="error-cell"
+                  title={r.error_message || "No error"}
+                >
+                  {r.error_message || "-"}
+                </td>
                 <td>
                   {r.dag_id && (
                     <button

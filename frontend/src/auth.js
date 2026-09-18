@@ -1,5 +1,6 @@
 const TOKEN_KEY = "metaconnect_token";
 const USERNAME_KEY = "metaconnect_username";
+const USER_INFO_KEY = "metaconnect_user_info";
 export const AUTH_CHANGE_EVENT = "metaconnect-auth-change";
 
 const KEYCLOAK_URL =
@@ -10,6 +11,15 @@ const KEYCLOAK_CLIENT_ID =
 
 function notifyAuthChange() {
   window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+}
+
+function readTokenClaims(token) {
+  try {
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return {};
+  }
 }
 
 export async function login(username, password) {
@@ -43,6 +53,19 @@ export async function login(username, password) {
   console.info("Keycloak login succeeded", { username });
   localStorage.setItem(TOKEN_KEY, data.access_token);
   localStorage.setItem(USERNAME_KEY, username);
+  const claims = readTokenClaims(data.access_token);
+  localStorage.setItem(
+    USER_INFO_KEY,
+    JSON.stringify({
+      username: claims.preferred_username || username,
+      name:
+        claims.name ||
+        [claims.given_name, claims.family_name].filter(Boolean).join(" ") ||
+        claims.preferred_username ||
+        username,
+      email: claims.email || "",
+    }),
+  );
   notifyAuthChange();
   return data.access_token;
 }
@@ -50,6 +73,7 @@ export async function login(username, password) {
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
+  localStorage.removeItem(USER_INFO_KEY);
   notifyAuthChange();
 }
 
@@ -59,6 +83,29 @@ export function getToken() {
 
 export function getCurrentUsername() {
   return localStorage.getItem(USERNAME_KEY) || "unknown";
+}
+
+export function getCurrentUser() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(USER_INFO_KEY) || "null");
+    if (stored) return stored;
+    const claims = readTokenClaims(getToken() || "");
+    const username = claims.preferred_username || getCurrentUsername();
+    return {
+      username,
+      name:
+        claims.name ||
+        [claims.given_name, claims.family_name].filter(Boolean).join(" ") ||
+        username,
+      email: claims.email || "",
+    };
+  } catch {
+    return {
+      username: getCurrentUsername(),
+      name: getCurrentUsername(),
+      email: "",
+    };
+  }
 }
 
 export function isAuthenticated() {

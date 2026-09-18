@@ -4,8 +4,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.schemas.metadata import ColumnOut, DatabaseOut, IngestionRunOut, IngestionRunWithConnection, SchemaOut, TableOut
-
 ALLOWED_CONNECTION_TYPES = {"cockroachdb"}
 CRON_REGEX = re.compile(r"^(\S+\s+){4}\S+$")
 

@@ -25,41 +25,56 @@ class ChartService:
         return buf.read()
 
     def render_connection_status_chart(self, status_counts: dict[str, int]) -> bytes:
-        """Render bar chart of connections grouped by status."""
-        df = pd.DataFrame(
-            {"status": list(status_counts.keys()), "count": list(status_counts.values())}
-        )
+        """Render a pie chart of connections grouped by status."""
         fig, ax = plt.subplots(figsize=(5, 4))
-        sns.barplot(data=df, x="status", y="count", hue="status", legend=False, ax=ax)
+        values = list(status_counts.values())
+        if sum(values) == 0:
+            ax.text(0.5, 0.5, "No connections yet", ha="center", va="center")
+            ax.axis("off")
+        else:
+            ax.pie(
+                values,
+                labels=list(status_counts.keys()),
+                autopct="%1.0f%%",
+                startangle=90,
+            )
+            ax.axis("equal")
         ax.set_title("Connections by Status")
-        ax.set_xlabel("")
-        ax.set_ylabel("Count")
         return self._fig_to_png_bytes(fig)
 
     def render_runs_over_time_chart(self, rows: list[dict[str, Any]]) -> bytes:
-        """Render bar chart showing ingestion runs over time."""
+        """Render a pie chart showing ingestion runs by status."""
         df = pd.DataFrame(rows)
         fig, ax = plt.subplots(figsize=(6, 4))
         if df.empty:
             ax.text(0.5, 0.5, "No ingestion runs yet", ha="center", va="center")
             ax.axis("off")
         else:
-            counts = df.groupby(["date", "status"]).size().reset_index(name="count")
-            sns.barplot(data=counts, x="date", y="count", hue="status", ax=ax)
+            counts = df["status"].value_counts()
+            ax.pie(
+                counts.values,
+                labels=counts.index,
+                autopct="%1.0f%%",
+                startangle=90,
+            )
             ax.set_title("Ingestion Runs (last 14 days)")
-            ax.set_xlabel("")
-            ax.set_ylabel("Runs")
-            plt.xticks(rotation=45, ha="right")
+            ax.axis("equal")
         return self._fig_to_png_bytes(fig)
 
     def render_metadata_counts_chart(self, counts: dict[str, int]) -> bytes:
-        """Render bar chart showing volume of metadata entities."""
-        df = pd.DataFrame(
-            {"level": list(counts.keys()), "count": list(counts.values())}
-        )
+        """Render a pie chart showing the relative metadata volume."""
         fig, ax = plt.subplots(figsize=(5, 4))
-        sns.barplot(data=df, x="level", y="count", hue="level", legend=False, ax=ax)
+        values = list(counts.values())
+        if sum(values) == 0:
+            ax.text(0.5, 0.5, "No metadata yet", ha="center", va="center")
+            ax.axis("off")
+        else:
+            ax.pie(
+                values,
+                labels=list(counts.keys()),
+                autopct="%1.0f%%",
+                startangle=90,
+            )
+            ax.axis("equal")
         ax.set_title("Metadata Volume")
-        ax.set_xlabel("")
-        ax.set_ylabel("Count")
         return self._fig_to_png_bytes(fig)

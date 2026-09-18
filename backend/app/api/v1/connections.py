@@ -67,7 +67,9 @@ def create_connection(
     db.refresh(connection)
 
     if connection.schedule_cron:
-        airflow_service.register_schedule(str(connection.id), connection.schedule_cron)
+        airflow_service.register_schedule(
+            str(connection.id), connection.connection_name, connection.schedule_cron
+        )
 
     return _to_response(connection)
 
@@ -132,7 +134,9 @@ def update_connection(
     db.commit()
     db.refresh(connection)
 
-    airflow_service.register_schedule(str(connection.id), connection.schedule_cron)
+    airflow_service.register_schedule(
+        str(connection.id), connection.connection_name, connection.schedule_cron
+    )
 
     return _to_response(connection)
 
@@ -172,7 +176,9 @@ def update_schedule(
     db.commit()
     db.refresh(connection)
 
-    airflow_service.register_schedule(str(connection.id), connection.schedule_cron)
+    airflow_service.register_schedule(
+        str(connection.id), connection.connection_name, connection.schedule_cron
+    )
 
     return _to_response(connection)
 

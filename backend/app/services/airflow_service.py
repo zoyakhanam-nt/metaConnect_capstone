@@ -1,4 +1,5 @@
 import time
+import re
 from pathlib import Path
 
 import requests
@@ -19,9 +20,27 @@ class AirflowService:
             settings.airflow_password,
         )
 
-    def ensure_dag(self, connection_id: str, schedule_cron: str | None = None) -> str:
-        dag_id = f"ingest_connection_{connection_id}"
-        dag_content = generate_dag(dag_id=dag_id, connection_id=connection_id, schedule_cron=schedule_cron)
+    @staticmethod
+    def _dag_id_for_connection(connection_name: str, connection_id: str) -> str:
+        """Create a readable, unique, Airflow-safe DAG ID."""
+        name = re.sub(r"[^a-zA-Z0-9]+", "_", connection_name).strip("_").lower()
+        name = name or "connection"
+        suffix = re.sub(r"[^a-zA-Z0-9]", "", connection_id)[:12]
+        return f"{name[:220]}_{suffix}"
+
+    def ensure_dag(
+        self,
+        connection_id: str,
+        connection_name: str,
+        schedule_cron: str | None = None,
+    ) -> str:
+        dag_id = self._dag_id_for_connection(connection_name, connection_id)
+        dag_content = generate_dag(
+            dag_id=dag_id,
+            connection_id=connection_id,
+            connection_name=connection_name,
+            schedule_cron=schedule_cron,
+        )
 
         dag_file = self.dag_directory / f"{dag_id}.py"
         dag_file.write_text(dag_content, encoding="utf-8")
@@ -49,13 +68,24 @@ class AirflowService:
         resp.raise_for_status()
         return resp.json()["dag_run_id"]
 
-    def deploy_and_trigger(self, connection_id: str, run_id: str, schedule_cron: str | None = None) -> tuple[str, str]:
-        dag_id = self.ensure_dag(connection_id, schedule_cron)
+    def deploy_and_trigger(
+        self,
+        connection_id: str,
+        connection_name: str,
+        run_id: str,
+        schedule_cron: str | None = None,
+    ) -> tuple[str, str]:
+        dag_id = self.ensure_dag(connection_id, connection_name, schedule_cron)
         dag_run_id = self.trigger_dag(dag_id, conf={"run_id": run_id})
         return dag_id, dag_run_id
 
-    def register_schedule(self, connection_id: str, schedule_cron: str | None) -> str:
-        return self.ensure_dag(connection_id, schedule_cron)
+    def register_schedule(
+        self,
+        connection_id: str,
+        connection_name: str,
+        schedule_cron: str | None,
+    ) -> str:
+        return self.ensure_dag(connection_id, connection_name, schedule_cron)
 
     def fetch_task_logs(
         self,
