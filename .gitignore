@@ -14,3 +14,5 @@ backend/__pycache__/
 backend/venv
 **/venv/
 .vscode/
+airflow/dags/generated/
+
