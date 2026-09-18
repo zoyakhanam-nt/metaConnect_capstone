@@ -57,11 +57,71 @@ class AirflowService:
     def register_schedule(self, connection_id: str, schedule_cron: str | None) -> str:
         return self.ensure_dag(connection_id, schedule_cron)
 
-    def fetch_task_logs(self, dag_id: str, dag_run_id: str, task_id: str = "run_ingestion", try_number: int = 1) -> str:
+    def fetch_task_logs(
+        self,
+        dag_id: str,
+        dag_run_id: str,
+        task_id: str | None = None,
+        try_number: int = 1,
+    ) -> str:
         from urllib.parse import quote
 
         encoded_run_id = quote(dag_run_id, safe="")
-        url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{encoded_run_id}/taskInstances/{task_id}/logs/{try_number}"
-        resp = requests.get(url, auth=self.airflow_auth, headers={"Accept": "text/plain"})
-        resp.raise_for_status()
-        return resp.text
+
+        # If a specific task is explicitly targeted and not the legacy single-task name
+        if task_id and task_id != "run_ingestion":
+            url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{encoded_run_id}/taskInstances/{task_id}/logs/{try_number}"
+            resp = requests.get(url, auth=self.airflow_auth, headers={"Accept": "text/plain"})
+            resp.raise_for_status()
+            return resp.text
+
+        # Otherwise, discover task instances in this DAG run and aggregate their logs
+        ti_url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{encoded_run_id}/taskInstances"
+        try:
+            ti_resp = requests.get(ti_url, auth=self.airflow_auth)
+            if ti_resp.status_code == 200:
+                task_instances = ti_resp.json().get("task_instances", [])
+                if task_instances:
+                    # Preferred order of execution
+                    order_map = {
+                        "get_db_task": 1,
+                        "get_schema_task": 2,
+                        "get_table_task": 3,
+                        "get_column_task": 4,
+                        "extract_metadata_task": 5,
+                    }
+                    task_instances.sort(
+                        key=lambda ti: order_map.get(ti.get("task_id", ""), 99)
+                    )
+
+                    combined_logs = []
+                    for ti in task_instances:
+                        tid = ti.get("task_id")
+                        if not tid:
+                            continue
+                        log_url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{encoded_run_id}/taskInstances/{tid}/logs/{try_number}"
+                        log_resp = requests.get(
+                            log_url,
+                            auth=self.airflow_auth,
+                            headers={"Accept": "text/plain"},
+                        )
+                        if log_resp.status_code == 200 and log_resp.text.strip():
+                            header = f"=== Task: {tid} ==="
+                            combined_logs.append(f"{header}\n{log_resp.text.strip()}\n")
+
+                    if combined_logs:
+                        return "\n\n".join(combined_logs)
+        except Exception:
+            pass
+
+        # Fallback to single task attempts
+        for fallback_id in [task_id or "extract_metadata_task", "get_db_task", "run_ingestion"]:
+            try:
+                url = f"{self.airflow_api_url}/dags/{dag_id}/dagRuns/{encoded_run_id}/taskInstances/{fallback_id}/logs/{try_number}"
+                resp = requests.get(url, auth=self.airflow_auth, headers={"Accept": "text/plain"})
+                if resp.status_code == 200:
+                    return resp.text
+            except Exception:
+                continue
+
+        return "No task logs available for this run."

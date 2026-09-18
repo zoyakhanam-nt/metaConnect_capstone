@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.connectors.cockroachdb import get_connector
+from app.connectors.registry import get_connector
 from app.core.crypto import decrypt_value, encrypt_value
 from app.core.scheduling import compute_next_run
 from app.core.security import get_current_user
@@ -190,16 +190,23 @@ def delete_connection(
     db.commit()
 
 
-def _test(host: str, port: int, database: str, username: str, password: str) -> ConnectionTestResult:
-    connector = get_connector(
-        "cockroachdb",
-        host=host,
-        port=port,
-        database=database,
-        username=username,
-        password=password,
-    )
+def _test(
+    connection_type: str,
+    host: str,
+    port: int,
+    database: str,
+    username: str,
+    password: str,
+) -> ConnectionTestResult:
     try:
+        connector = get_connector(
+            connection_type or "cockroachdb",
+            host=host,
+            port=port,
+            database=database,
+            username=username,
+            password=password,
+        )
         connector.test_connection()
         return ConnectionTestResult(success=True, message="Connection successful")
     except Exception as e:
@@ -210,7 +217,14 @@ def _test(host: str, port: int, database: str, username: str, password: str) -> 
 def test_new_connection(payload: ConnectionCreate, user: dict = Depends(get_current_user)):
     """Used both by the standalone 'test before save' call and by the Add/Edit form's
     inline Test button — takes raw (unencrypted, not-yet-saved) values."""
-    return _test(payload.host, payload.port, payload.database, payload.username, payload.password)
+    return _test(
+        payload.connection_type,
+        payload.host,
+        payload.port,
+        payload.database,
+        payload.username,
+        payload.password,
+    )
 
 
 @router.post("/connections/{connection_id}/test", response_model=ConnectionTestResult)
@@ -224,6 +238,7 @@ def test_existing_connection(
         raise HTTPException(status_code=404, detail="Connection not found")
 
     result = _test(
+        connection.connection_type,
         decrypt_value(connection.host),
         int(decrypt_value(connection.port)),
         connection.database,

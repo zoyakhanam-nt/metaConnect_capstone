@@ -491,7 +491,6 @@ export default function ConnectionsTab({ onViewHistory }) {
             <tr>
               <th>Name</th>
               <th>Owner</th>
-              <th>Host</th>
               <th>Schedule</th>
               <th>Next Run</th>
               <th>Status</th>
@@ -510,9 +509,6 @@ export default function ConnectionsTab({ onViewHistory }) {
                 <tr key={c.id}>
                   <td>{c.connection_name}</td>
                   <td>{c.owner_name || <span className="muted">—</span>}</td>
-                  <td>
-                    {c.host}:{c.port}
-                  </td>
                   <td>
                     {c.schedule_cron ? (
                       scheduleLabel
@@ -569,7 +565,7 @@ export default function ConnectionsTab({ onViewHistory }) {
             })}
             {connections.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty-row">
+                <td colSpan={6} className="empty-row">
                   No connections found
                 </td>
               </tr>
