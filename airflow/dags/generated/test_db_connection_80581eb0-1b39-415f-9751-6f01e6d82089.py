@@ -1,13 +1,4 @@
-def generate_dag(
-    dag_id: str,
-    connection_id: str,
-    connection_name: str | None = None,
-    schedule_cron: str | None = None,
-) -> str:
 
-    schedule_repr = f'"{schedule_cron}"' if schedule_cron else "None"
-
-    return f'''
 import os
 from datetime import datetime
 
@@ -15,7 +6,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 
-CONNECTION_ID = "{connection_id}"
+CONNECTION_ID = "80581eb0-1b39-415f-9751-6f01e6d82089"
 
 
 def run_ingestion(**context):
@@ -25,26 +16,26 @@ def run_ingestion(**context):
     internal_api_key = os.getenv("INTERNAL_API_KEY")
     if not internal_api_key:
         raise RuntimeError("INTERNAL_API_KEY is missing in the environment for the ingestion DAG.")
-    headers = {{"X-Internal-Api-Key": internal_api_key}}
+    headers = {"X-Internal-Api-Key": internal_api_key}
 
-    conf = context["dag_run"].conf or {{}}
+    conf = context["dag_run"].conf or {}
     run_id = conf.get("run_id")
 
     if run_id:
         # manually triggered from the API — a run row already exists, just execute it
-        url = f"{{backend_url}}/api/internal/ingestion-runs/{{run_id}}/execute"
+        url = f"{backend_url}/api/internal/ingestion-runs/{run_id}/execute"
     else:
         # fired automatically by the schedule — no run exists yet, create + execute in one call
-        url = f"{{backend_url}}/api/internal/connections/{{CONNECTION_ID}}/scheduled-ingest"
+        url = f"{backend_url}/api/internal/connections/{CONNECTION_ID}/scheduled-ingest"
 
     resp = requests.post(url, headers=headers, timeout=300)
     resp.raise_for_status()
 
 
 with DAG(
-    dag_id="{dag_id}",
+    dag_id="test_db_connection_80581eb0-1b39-415f-9751-6f01e6d82089",
     start_date=datetime(2024, 1, 1),
-    schedule={schedule_repr},
+    schedule=None,
     catchup=False,
     is_paused_upon_creation=False,
 ) as dag:
@@ -53,4 +44,3 @@ with DAG(
         task_id="run_ingestion",
         python_callable=run_ingestion,
     )
-'''

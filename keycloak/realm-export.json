@@ -2,6 +2,7 @@
   "realm": "metaconnect",
   "enabled": true,
   "sslRequired": "none",
+  "ssoSessionIdleTimeout": 3600,
   "registrationAllowed": false,
   "clients": [
     {
@@ -18,20 +19,28 @@
   "users": [
     {
       "username": "testuser1",
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "testuser1@example.com",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
-        { "type": "password", "value": "testpass", "temporary": false }
+        { "type": "password", "value": "testuser1", "temporary": false }
       ],
+      "requiredActions": [],
       "realmRoles": ["offline_access", "uma_authorization"]
     },
-     {
+    {
       "username": "testuser2",
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "testuser2@example.com",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
-        { "type": "password", "value": "testpass", "temporary": false }
+        { "type": "password", "value": "testuser2", "temporary": false }
       ],
+      "requiredActions": [],
       "realmRoles": ["offline_access", "uma_authorization"]
     }
   ]

@@ -2,6 +2,8 @@ import psycopg2
 
 from app.connectors.base import BaseConnector
 
+COCKROACH_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
+
 
 class CockroachDBConnector(BaseConnector):
     def _connect(self, database: str | None = None):
@@ -11,8 +13,9 @@ class CockroachDBConnector(BaseConnector):
             dbname=database or self.database,
             user=self.username,
             password=self.password,
-            sslmode="disable",   # use verify-full + sslrootcert for CockroachDB Cloud
-            connect_timeout=5,
+            sslmode="verify-full",
+            connect_timeout=15,
+            sslrootcert=COCKROACH_CA_BUNDLE,
         )
 
     def test_connection(self) -> bool:
@@ -26,7 +29,7 @@ class CockroachDBConnector(BaseConnector):
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT datname FROM pg_database "
-                    "WHERE datname NOT IN ('system', 'postgres', 'defaultdb')"
+                    "WHERE datname <> 'system'"
                 )
                 return [row[0] for row in cur.fetchall()]
         finally:

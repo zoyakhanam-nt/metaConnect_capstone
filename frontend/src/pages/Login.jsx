@@ -25,12 +25,16 @@ export default function Login() {
     setServerError(null);
     setBusy(true);
     try {
+      console.log("Logging in with", form.username, form.password);
       await login(form.username, form.password);
+      console.log("Login successful, navigating to /");
       navigate("/");
+      console.log("Navigation complete");
     } catch (err) {
       setServerError(err.message);
     } finally {
       setBusy(false);
+      console.log("Login process completed");
     }
   };
 
@@ -44,9 +48,13 @@ export default function Login() {
           Username
           <input
             value={form.username}
-            onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, username: e.target.value }))
+            }
           />
-          {errors.username && <span className="field-error">{errors.username}</span>}
+          {errors.username && (
+            <span className="field-error">{errors.username}</span>
+          )}
         </label>
 
         <label>
@@ -54,12 +62,18 @@ export default function Login() {
           <input
             type="password"
             value={form.password}
-            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, password: e.target.value }))
+            }
           />
-          {errors.password && <span className="field-error">{errors.password}</span>}
+          {errors.password && (
+            <span className="field-error">{errors.password}</span>
+          )}
         </label>
 
-        <button type="submit" disabled={busy}>{busy ? "Signing in..." : "Sign in"}</button>
+        <button type="submit" disabled={busy}>
+          {busy ? "Signing in..." : "Sign in"}
+        </button>
       </form>
     </div>
   );

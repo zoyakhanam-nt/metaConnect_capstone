@@ -6,8 +6,10 @@ from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
-KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://keycloak:8080")
-KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "metaconnect")
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL")
+KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM")
+if not KEYCLOAK_URL or not KEYCLOAK_REALM:
+    raise RuntimeError("KEYCLOAK_URL and KEYCLOAK_REALM must be set in the local .env file.")
 
 _JWKS_URL = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
 
@@ -16,7 +18,9 @@ _JWKS_TTL_SECONDS = 300
 
 bearer_scheme = HTTPBearer()
 
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "change-me-internal-key")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
+if not INTERNAL_API_KEY:
+    raise RuntimeError("INTERNAL_API_KEY is not set. Add it to your local .env file.")
 
 
 def _get_jwks() -> dict:
@@ -31,15 +35,12 @@ def _get_jwks() -> dict:
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> dict:
     token = credentials.credentials
-
     try:
         jwks = _get_jwks()
         unverified_header = jwt.get_unverified_header(token)
         key = next((k for k in jwks["keys"] if k["kid"] == unverified_header["kid"]), None)
-
         if key is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown signing key")
-
         payload = jwt.decode(token, key, algorithms=["RS256"], options={"verify_aud": False})
         return payload
     except JWTError as e:

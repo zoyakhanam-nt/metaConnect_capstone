@@ -1,3 +1,4 @@
+from pdb import run
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -32,8 +33,9 @@ def trigger_ingestion(
     db.refresh(run)
 
     try:
-        dag_id, _ = airflow_service.deploy_and_trigger(str(connection_id), str(run.id))
+        dag_id, dag_run_id = airflow_service.deploy_and_trigger(str(connection_id), str(run.id), connection.schedule_cron)
         run.dag_id = dag_id
+        run.dag_run_id = dag_run_id
         run.status = "running"
     except Exception as e:
         run.status = "failed"
@@ -118,7 +120,7 @@ def list_columns(
     search: str | None = Query(None),
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
-):
+    ):
     query = select(ColumnMetadata).where(ColumnMetadata.table_id == table_id)
     if search:
         query = query.where(ColumnMetadata.name.ilike(f"%{search}%"))
@@ -126,3 +128,22 @@ def list_columns(
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     items = db.execute(query.offset(skip).limit(limit)).scalars().all()
     return Page(items=items, total=total, skip=skip, limit=limit)
+
+@router.get("/ingestion/{run_id}/logs")
+def get_ingestion_logs(
+    run_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+    ):
+    run = db.get(IngestionRun, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Ingestion run not found")
+    if not run.dag_id or not run.dag_run_id:
+        raise HTTPException(status_code=404, detail="No Airflow logs available for this run")
+
+    try:
+        logs = airflow_service.fetch_task_logs(run.dag_id, run.dag_run_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not fetch logs from Airflow: {e}")
+
+    return {"logs": logs}

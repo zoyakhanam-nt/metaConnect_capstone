@@ -1,41 +1,63 @@
-import { NavLink, Routes, Route, useNavigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard.jsx";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import Sidebar from "./components/Sidebar.jsx";
+import Dashboard from "./pages/Dashboards.jsx";
 import Connections from "./pages/Connections.jsx";
+import ConnectionRuns from "./pages/ConnectionRuns.jsx";
 import MetadataExplorer from "./pages/MetadataExplorer.jsx";
 import Login from "./pages/Login.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import { isAuthenticated, logout } from "./auth.js";
+import ProtectedRoute from "./components/ProtectedRoutes.jsx";
+import { AUTH_CHANGE_EVENT, isAuthenticated } from "./auth.js";
 
-export default function App() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
+function AppShell() {
   return (
-    <div className="app">
-      <nav className="navbar">
-        <span className="brand">MetaConnect</span>
-        {isAuthenticated() && (
-          <>
-            <NavLink to="/" end>Dashboard</NavLink>
-            <NavLink to="/connections">Connections</NavLink>
-            <NavLink to="/explorer">Metadata Explorer</NavLink>
-            <button className="logout-btn" onClick={handleLogout}>Logout</button>
-          </>
-        )}
-      </nav>
-
+    <div className="app-shell">
+      <Sidebar />
       <main className="content">
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/connections" element={<ProtectedRoute><Connections /></ProtectedRoute>} />
-          <Route path="/explorer" element={<ProtectedRoute><MetadataExplorer /></ProtectedRoute>} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/connections" element={<Connections />} />
+          <Route path="/connections/:id/runs" element={<ConnectionRuns />} />
+          <Route path="/explorer" element={<MetadataExplorer />} />
+          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
         </Routes>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  const [authenticated, setAuthenticated] = useState(isAuthenticated);
+
+  useEffect(() => {
+    const updateAuthentication = () => setAuthenticated(isAuthenticated());
+    window.addEventListener(AUTH_CHANGE_EVENT, updateAuthentication);
+    window.addEventListener("storage", updateAuthentication);
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGE_EVENT, updateAuthentication);
+      window.removeEventListener("storage", updateAuthentication);
+    };
+  }, []);
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={authenticated ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/*"
+        element={
+          authenticated ? (
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+    </Routes>
   );
 }

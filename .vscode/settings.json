@@ -1,3 +1,9 @@
 {
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "none",
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

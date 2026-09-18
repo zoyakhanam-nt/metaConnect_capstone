@@ -2,7 +2,13 @@ fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
+email-validator
 SQLAlchemy
 psycopg2-binary
 requests
 python-jose[cryptography]
+matplotlib
+seaborn
+pandas
+cryptography
+croniter

@@ -89,3 +89,24 @@ CREATE TABLE ingestion_runs (
 );
 
 --rollback DROP TABLE ingestion_runs;
+
+--changeset zoya.khanam:7-add-schedule-cron
+ALTER TABLE connection ADD COLUMN schedule_cron VARCHAR(100);
+
+--changeset zoya.khanam:8-add-owner-details
+ALTER TABLE connection ADD COLUMN owner_name VARCHAR(255);
+ALTER TABLE connection ADD COLUMN owner_email VARCHAR(255);
+
+--rollback ALTER TABLE connection DROP COLUMN owner_name; ALTER TABLE connection DROP COLUMN owner_email;
+
+
+--changeset zoya.khanam:9-encrypt-host-port
+ALTER TABLE connection ALTER COLUMN host TYPE VARCHAR(500);
+ALTER TABLE connection ALTER COLUMN port TYPE VARCHAR(500) USING port::text;
+
+--rollback ALTER TABLE connection ALTER COLUMN port TYPE INTEGER USING port::integer; ALTER TABLE connection ALTER COLUMN host TYPE VARCHAR(255);
+
+--changeset zoya.khanam:10-add-dag-run-id
+ALTER TABLE ingestion_runs ADD COLUMN dag_run_id VARCHAR(255);
+
+--rollback ALTER TABLE ingestion_runs DROP COLUMN dag_run_id;

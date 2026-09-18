@@ -1,4 +1,4 @@
-from backend.app.connectors.cockroachdb import CockroachDBConnector
+from app.connectors.cockroachdb import CockroachDBConnector
 # from app.connectors.postgres_connector import PostgresConnector
 # from app.connectors.mysql_connector import MySQLConnector
 # from app.connectors.mongodb_connector import MongoDBConnector
