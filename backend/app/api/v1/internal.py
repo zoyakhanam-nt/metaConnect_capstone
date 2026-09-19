@@ -87,28 +87,5 @@ def receive_metadata(
     return result
 
 
-@router.post(
-    "/internal/ingestion-runs/{run_id}/execute",
-    dependencies=[Depends(verify_internal_api_key)],
-)
-def execute_ingestion_legacy(run_id: uuid.UUID, db: Session = Depends(get_db)):
-    """Legacy compatibility endpoint."""
-    run = db.get(IngestionRun, run_id)
-    if run is None:
-        raise HTTPException(status_code=404, detail="Ingestion run not found")
-    return {"status": run.status}
 
 
-@router.post(
-    "/internal/connections/{connection_id}/scheduled-ingest",
-    dependencies=[Depends(verify_internal_api_key)],
-)
-def scheduled_ingest_legacy(connection_id: uuid.UUID, db: Session = Depends(get_db)):
-    """Legacy compatibility endpoint."""
-    connection = db.get(Connection, connection_id)
-    if connection is None:
-        raise HTTPException(status_code=404, detail="Connection not found")
-
-    service = IngestionService(db)
-    run = service.start_run(connection_id=connection_id)
-    return {"status": run.status, "run_id": str(run.id)}

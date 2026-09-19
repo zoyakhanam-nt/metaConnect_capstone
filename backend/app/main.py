@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 from app.api.v1.charts import router as charts_router
 from app.api.v1.connections import router as connection_router
 from app.api.v1.dashboard import router as dashboard_router
-from app.api.v1.deploy import router as deploy_router
 from app.api.v1.internal import router as internal_router
 from app.api.v1.metadata import router as metadata_router
 from app.core.logging_config import setup_logging
@@ -47,7 +46,6 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
-app.include_router(deploy_router, prefix="/api")
 app.include_router(connection_router, prefix="/api")
 app.include_router(metadata_router, prefix="/api")
 app.include_router(internal_router, prefix="/api")
