@@ -62,8 +62,11 @@ export const api = {
     return request(`/runs${qs ? `?${qs}` : ""}`);
   },
   deleteConnection: (id) => request(`/connections/${id}`, { method: "DELETE" }),
-  testConnection: (id) =>
-    request(`/connections/${id}/test`, { method: "POST" }),
+  testConnection: (id, data) =>
+    request(`/connections/${id}/test`, {
+      method: "POST",
+      ...(data ? { body: JSON.stringify(data) } : {}),
+    }),
   ingestConnection: (id) =>
     request(`/connections/${id}/ingest`, { method: "POST" }),
   getIngestionRun: (runId) => request(`/ingestion/${runId}`),

@@ -5,11 +5,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1.charts import router as charts_router
-from app.api.v1.connections import router as connection_router
-from app.api.v1.dashboard import router as dashboard_router
-from app.api.v1.internal import router as internal_router
-from app.api.v1.metadata import router as metadata_router
+from app.routers.v1.charts import router as charts_router
+from app.routers.v1.connections import router as connection_router
+from app.routers.v1.dashboard import router as dashboard_router
+from app.routers.v1.internal import router as internal_router
+from app.routers.v1.metadata import router as metadata_router
 from app.core.logging_config import setup_logging
 
 setup_logging()

@@ -131,7 +131,9 @@ export default function ConnectionsTab({ onViewHistory }) {
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await api.testNewConnection(form);
+      const result = editingId
+        ? await api.testConnection(editingId, form)
+        : await api.testNewConnection(form);
       setTestResult(result);
     } catch (err) {
       setTestResult({ success: false, message: err.message });

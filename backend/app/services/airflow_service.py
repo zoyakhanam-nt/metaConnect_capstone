@@ -83,7 +83,7 @@ class AirflowService:
         self,
         connection_id: str,
         connection_name: str,
-        schedule_cron: str | None,
+        schedule_cron: str | None, #optional
     ) -> str:
         return self.ensure_dag(connection_id, connection_name, schedule_cron)
 
