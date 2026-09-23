@@ -28,6 +28,12 @@ Built as a capstone project. Scoped end-to-end to a single connector (CockroachD
 - Dashboard with live aggregate stats and three server-rendered pie charts (connections by status, metadata volume, ingestion runs by outcome)
 - Owner attribution on every connection, derived from the creating Keycloak user's token — not client-editable
 - Search, status filtering, and pagination on every list endpoint
+  
+## Links for docker hub images
+[metaconnect-frontend](https://hub.docker.com/r/zoyakhanam/metaconnect-frontend)
+
+
+[metaconnect-api](https://hub.docker.com/r/zoyakhanam/metaconnect-api)
 
 ## Project structure
 
