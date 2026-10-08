@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-ALLOWED_CONNECTION_TYPES = {"cockroachdb"}
+ALLOWED_CONNECTION_TYPES = {"cockroachdb", "vertica"}
 CRON_REGEX = re.compile(r"^(\S+\s+){4}\S+$")
 
 

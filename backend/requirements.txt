@@ -12,3 +12,4 @@ seaborn
 pandas
 cryptography
 croniter
+vertica-python

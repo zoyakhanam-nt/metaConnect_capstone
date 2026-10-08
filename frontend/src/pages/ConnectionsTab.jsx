@@ -15,6 +15,11 @@ const emptyForm = {
   database: "",
 };
 
+const CONNECTION_TYPES = [
+  { value: "cockroachdb", label: "CockroachDB", port: 26257, username: "root" },
+  { value: "vertica", label: "Vertica", port: 5433, username: "dbadmin" },
+];
+
 function validate(form) {
   const errors = {};
   if (!form.connection_name.trim()) errors.connection_name = "Required";
@@ -79,6 +84,18 @@ export default function ConnectionsTab({ onViewHistory }) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: name === "port" ? Number(value) : value }));
     setErrors((errs) => ({ ...errs, [name]: undefined }));
+    setTestResult(null);
+  };
+
+  const handleTypeChange = (e) => {
+    const selected = CONNECTION_TYPES.find((t) => t.value === e.target.value);
+    setForm((f) => ({
+      ...f,
+      connection_type: selected.value,
+      port: selected.port,
+      username: selected.username,
+    }));
+    setErrors({});
     setTestResult(null);
   };
 
@@ -213,14 +230,14 @@ export default function ConnectionsTab({ onViewHistory }) {
       <div className="page-header">
         <div>
           <p className="page-subtitle">
-            Manage CockroachDB connections and ingestion schedules
+            Manage database connections and ingestion schedules
           </p>
         </div>
         <button
           className="btn-primary"
           onClick={showForm ? closeForm : openAddForm}
         >
-          {showForm ? "✕ Cancel" : "＋ Add Connection"}
+          {showForm ? "Cancel" : "Add Connection"}
         </button>
       </div>
 
@@ -247,6 +264,21 @@ export default function ConnectionsTab({ onViewHistory }) {
             {activeFormTab === "details" && (
               <>
                 <div className="form-grid">
+                  <div className="field">
+                    <label>Connection Type *</label>
+                    <select
+                      name="connection_type"
+                      value={form.connection_type}
+                      onChange={handleTypeChange}
+                      disabled={Boolean(editingId)}
+                    >
+                      {CONNECTION_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="field">
                     <label>Connection Name *</label>
                     <input
@@ -331,7 +363,7 @@ export default function ConnectionsTab({ onViewHistory }) {
                     onClick={handleTestInForm}
                     disabled={testing}
                   >
-                    🧪 {testing ? "Testing..." : "Test Connection"}
+                    {testing ? "Testing..." : "Test Connection"}
                   </button>
                   {testResult && (
                     <span
@@ -507,30 +539,30 @@ export default function ConnectionsTab({ onViewHistory }) {
                       disabled={busyId === c.id}
                       onClick={() => handleTestExisting(c.id)}
                     >
-                      🧪
+                      Test
                     </button>
                     <button
                       title="Run ingestion now"
                       disabled={busyId === c.id}
                       onClick={() => handleIngest(c.id)}
                     >
-                      ▶
+                      Run
                     </button>
                     <button
                       title="View run history"
                       onClick={() => onViewHistory(c.id)}
                     >
-                      🕒
+                      History
                     </button>
                     <button title="Edit" onClick={() => openEditForm(c)}>
-                      ✎
+                      Edit
                     </button>
                     <button
                       title="Delete"
                       className="btn-danger"
                       onClick={() => setDeleteTarget(c)}
                     >
-                      🗑
+                      Delete
                     </button>
                   </td>
                 </tr>

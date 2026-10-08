@@ -8,7 +8,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 5
     AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
     BACKEND_URL: http://api:8000
-    _PIP_ADDITIONAL_REQUIREMENTS: "requests psycopg2-binary"
+    _PIP_ADDITIONAL_REQUIREMENTS: "requests psycopg2-binary vertica-python"
   env_file:
     - .env
   volumes:
@@ -104,6 +104,7 @@ services:
       - "8000:8000"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - frontend_node_modules:/opt/airflow/node_modules
     environment:
       AIRFLOW_DAG_DIR: /opt/airflow/dags/generated
       AIRFLOW_API_URL: http://airflow-webserver:8080/api/v1
@@ -141,3 +142,5 @@ volumes:
   airflow_logs:
   airflow_plugins:
   app_db_data:
+  vertica_data:
+  frontend_node_modules:

@@ -25,11 +25,20 @@ def get_table(source: Any, database: str, schema: str, **kwargs: Any) -> list[st
             conn = get_db_connection(source, database=database)
             try:
                 with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT table_name FROM information_schema.tables "
-                        "WHERE table_schema = %s AND table_type = 'BASE TABLE'",
-                        (schema,),
-                    )
+                    conn_type = (source.get("connection_type") or "cockroachdb").lower()
+                    if conn_type == "vertica":
+                        cur.execute(
+                            "SELECT table_name FROM v_catalog.tables "
+                            "WHERE table_schema = %s AND is_system_table = false "
+                            "AND is_temp_table = false ORDER BY table_name",
+                            (schema,),
+                        )
+                    else:
+                        cur.execute(
+                            "SELECT table_name FROM information_schema.tables "
+                            "WHERE table_schema = %s AND table_type = 'BASE TABLE'",
+                            (schema,),
+                        )
                     tables = [row[0] for row in cur.fetchall()]
             finally:
                 conn.close()

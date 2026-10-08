@@ -74,9 +74,58 @@ export default function MetadataExplorer() {
     tables: "Tables",
     columns: "Columns",
   }[level];
-  const icon = { databases: "🗄", schemas: "📁", tables: "📋", columns: "▫" }[
-    level
-  ];
+
+  const iconStyle = {
+    width: 16,
+    height: 16,
+    flexShrink: 0,
+    verticalAlign: "middle",
+  };
+
+  const DatabaseIcon = () => (
+    <svg viewBox="0 0 24 24" style={iconStyle} aria-hidden="true">
+      <path
+        d="M4 7.5C4 5.57 7.13 4 12 4s8 1.57 8 3.5S16.87 11 12 11 4 9.43 4 7.5Zm0 4.5c0 1.93 3.13 3.5 8 3.5s8-1.57 8-3.5v5c0 1.93-3.13 3.5-8 3.5s-8-1.57-8-3.5v-5Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+
+  const FolderIcon = () => (
+    <svg viewBox="0 0 24 24" style={iconStyle} aria-hidden="true">
+      <path
+        d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l1.5 2H18.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+
+  const TableIcon = () => (
+    <svg viewBox="0 0 24 24" style={iconStyle} aria-hidden="true">
+      <path
+        d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13Zm2.5 1.5h11v3h-11V7Zm0 5h4v4h-4v-4Zm6 0h5v4h-5v-4Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+
+  const ColumnIcon = () => (
+    <svg viewBox="0 0 24 24" style={iconStyle} aria-hidden="true">
+      <path
+        d="M5 4.5A2.5 2.5 0 0 1 7.5 2h9A2.5 2.5 0 0 1 19 4.5v15A2.5 2.5 0 0 1 16.5 22h-9A2.5 2.5 0 0 1 5 19.5v-15Zm2.5 1.5h9v3h-9V6Zm0 5h9v3h-9v-3Zm0 5h9v3h-9v-3Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+
+  const levelIconMap = {
+    databases: DatabaseIcon,
+    schemas: FolderIcon,
+    tables: TableIcon,
+    columns: ColumnIcon,
+  };
+
+  const LevelIcon = levelIconMap[level];
   const connName = connections.find(
     (c) => c.id === connectionId,
   )?.connection_name;
@@ -151,8 +200,9 @@ export default function MetadataExplorer() {
                     className={level !== "columns" ? "clickable-row" : ""}
                     onClick={() => drillInto(row)}
                   >
-                    <td>
-                      {icon} {row.name}
+                    <td style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <LevelIcon />
+                      <span>{row.name}</span>
                     </td>
                     {level === "columns" ? (
                       <>

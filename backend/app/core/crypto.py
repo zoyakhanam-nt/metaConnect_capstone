@@ -20,7 +20,6 @@ def decrypt_value(token: str) -> str:
     except InvalidToken:
         raise ValueError("Stored value could not be decrypted — ENCRYPTION_KEY may have changed")
 
-
 # kept as aliases so nothing else needs renaming
 encrypt_password = encrypt_value
 decrypt_password = decrypt_value

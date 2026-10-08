@@ -34,6 +34,12 @@ def get_schema(source: Any, database: str, **kwargs: Any) -> list[str]:
                         schemas = [row[0] for row in cur.fetchall()]
                     elif conn_type == "mysql":
                         schemas = [database]
+                    elif conn_type == "vertica":
+                        cur.execute(
+                            "SELECT schema_name FROM v_catalog.schemata "
+                            "WHERE is_system_schema = false ORDER BY schema_name"
+                        )
+                        schemas = [row[0] for row in cur.fetchall()]
                     else:
                         raise ValueError(f"Unsupported connection type: {conn_type}")
             finally:

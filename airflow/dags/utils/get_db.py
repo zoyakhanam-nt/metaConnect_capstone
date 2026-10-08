@@ -13,7 +13,7 @@ except ImportError:
 def get_db_connection(config: dict[str, Any], database: str | None = None) -> Any:
     """
     Establish a connection based on config dictionary.
-    Supports CockroachDB, PostgreSQL, MySQL, and extensible connection types.
+    Supports CockroachDB, PostgreSQL, MySQL, Vertica, and extensible connection types.
     """
     conn_type = (config.get("connection_type") or "cockroachdb").lower()
     db_name = database or config.get("database") or "defaultdb"
@@ -73,6 +73,20 @@ def get_db_connection(config: dict[str, Any], database: str | None = None) -> An
                 )
             except ImportError:
                 raise RuntimeError("Neither 'pymysql' nor 'mysql-connector-python' is installed.")
+    elif conn_type == "vertica":
+        try:
+            import vertica_python
+        except ImportError:
+            raise RuntimeError("vertica-python is not installed in this environment.")
+        return vertica_python.connect(
+            host=config.get("host"),
+            port=int(config.get("port", 5433)),
+            user=config.get("username"),
+            password=config.get("password") or "",
+            database=db_name,
+            connection_timeout=15,
+            autocommit=True,
+        )
     else:
         raise ValueError(f"Unsupported connection type: '{conn_type}'")
 
@@ -106,6 +120,10 @@ def get_db(source: Any, **kwargs: Any) -> list[str]:
                         cur.execute("SHOW DATABASES;")
                         excluded = {"information_schema", "mysql", "performance_schema", "sys"}
                         databases = [row[0] for row in cur.fetchall() if row[0] not in excluded]
+                    elif conn_type == "vertica":
+                        # A Vertica connection is scoped to a single database.
+                        cur.execute("SELECT current_database();")
+                        databases = [row[0] for row in cur.fetchall()]
                     else:
                         raise ValueError(f"Unsupported connection type: {conn_type}")
             finally:

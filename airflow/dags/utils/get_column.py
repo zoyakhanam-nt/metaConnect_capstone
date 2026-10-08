@@ -75,6 +75,30 @@ def get_column(source: Any, database: str, schema: str, table: str, **kwargs: An
                             }
                             for row in cur.fetchall()
                         ]
+                    elif conn_type == "vertica":
+                        cur.execute(
+                            """
+                            SELECT c.column_name, c.data_type, c.is_nullable,
+                                   (pk.column_name IS NOT NULL) AS is_primary_key
+                            FROM v_catalog.columns c
+                            LEFT JOIN v_catalog.primary_keys pk
+                                   ON pk.table_schema = c.table_schema
+                                  AND pk.table_name = c.table_name
+                                  AND pk.column_name = c.column_name
+                            WHERE c.table_schema = %s AND c.table_name = %s
+                            ORDER BY c.ordinal_position
+                            """,
+                            (schema, table),
+                        )
+                        columns = [
+                            {
+                                "name": row[0],
+                                "data_type": row[1],
+                                "is_nullable": bool(row[2]),
+                                "is_primary_key": bool(row[3]),
+                            }
+                            for row in cur.fetchall()
+                        ]
                     else:
                         raise ValueError(f"Unsupported connection type: {conn_type}")
             finally:

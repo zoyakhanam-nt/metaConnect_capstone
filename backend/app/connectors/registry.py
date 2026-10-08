@@ -1,10 +1,12 @@
 from app.connectors.cockroachdb import CockroachDBConnector
+from app.connectors.vertica_connector import VerticaConnector
 # from app.connectors.postgres_connector import PostgresConnector
 # from app.connectors.mysql_connector import MySQLConnector
 # from app.connectors.mongodb_connector import MongoDBConnector
 
 CONNECTOR_REGISTRY = {
     "cockroachdb": CockroachDBConnector,
+    "vertica": VerticaConnector,
     # "postgresql": PostgresConnector,
     # "mysql": MySQLConnector,
     # "mongodb": MongoDBConnector,
